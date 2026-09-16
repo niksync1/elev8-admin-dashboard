@@ -1,5 +1,7 @@
 export interface InventoryTransaction {
   id: string;
+  tenant_id: string;
+  location_id: string;
   product_id: string;
   quantity: number;
   transaction_type: string;

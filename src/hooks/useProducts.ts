@@ -3,53 +3,83 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrowserClient } from "@/lib/supabase";
 import type { Product, CreateProductInput, UpdateProductInput } from "@/types/product";
+import { useTenant } from "@/components/TenantProvider";
 
 const supabase: any = getBrowserClient();
 
 export function useProducts(search?: string) {
+  const { tenant, location } = useTenant();
   return useQuery({
-    queryKey: ["products", search],
+    queryKey: ["products", tenant?.id, location?.id, search],
     queryFn: async () => {
+      if (!tenant || !location) return [];
       let query = supabase
         .from("products")
         .select("*")
+        .eq("tenant_id", tenant.id)
         .order("updated_at", { ascending: false });
 
       if (search && search.trim().length >= 2) {
-        query = query.or(
-          `name.ilike.%${search}%,barcode.ilike.%${search}%,category.ilike.%${search}%`
-        );
+        const normalized = search.trim();
+        const safe = normalized.replace(/[,%()]/g, " ");
+        query = query.or(`name.ilike.%${safe}%,barcode.eq.${normalized.replace(/[,()]/g, "")}`);
       }
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as Product[];
+      const products = (data ?? []) as Product[];
+      if (!products.length) return products;
+      const levels = await supabase
+        .from("inventory_levels")
+        .select("product_id,quantity")
+        .eq("tenant_id", tenant.id)
+        .eq("location_id", location.id)
+        .in("product_id", products.map((product) => product.id));
+      if (levels.error) throw levels.error;
+      const quantities = new Map((levels.data ?? []).map((row: any) => [row.product_id, row.quantity]));
+      return products.map((product) => ({
+        ...product,
+        location_quantity: Number(quantities.get(product.id) ?? 0),
+      }));
     },
+    enabled: !!tenant && !!location,
   });
 }
 
 export function useProduct(id: string | undefined) {
+  const { tenant, location } = useTenant();
   return useQuery({
-    queryKey: ["product", id],
+    queryKey: ["product", tenant?.id, location?.id, id],
     queryFn: async () => {
-      if (!id) return null;
+      if (!id || !tenant || !location) return null;
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .eq("tenant_id", tenant.id)
         .eq("id", id)
         .single();
       if (error) throw error;
-      return data as Product;
+      const level = await supabase
+        .from("inventory_levels")
+        .select("quantity")
+        .eq("tenant_id", tenant.id)
+        .eq("location_id", location.id)
+        .eq("product_id", id)
+        .maybeSingle();
+      if (level.error) throw level.error;
+      return { ...(data as Product), location_quantity: Number(level.data?.quantity ?? 0) };
     },
-    enabled: !!id,
+    enabled: !!id && !!tenant && !!location,
   });
 }
 
 export function useCreateProduct() {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (input: CreateProductInput) => {
+      if (!tenant) throw new Error("Select a business before creating a product.");
       const slug = input.name
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
@@ -58,6 +88,7 @@ export function useCreateProduct() {
       const { error } = await supabase.from("products").insert([
         {
           name: input.name,
+          tenant_id: tenant.id,
           slug,
           barcode: input.barcode,
           description: input.description ?? null,
@@ -80,10 +111,11 @@ export function useCreateProduct() {
 
 export function useUpdateProduct(id: string | undefined) {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (input: UpdateProductInput) => {
-      if (!id) throw new Error("Product ID is required");
+      if (!id || !tenant) throw new Error("Product ID and business are required");
 
       const updates: Record<string, any> = {};
 
@@ -105,6 +137,7 @@ export function useUpdateProduct(id: string | undefined) {
       const { error } = await supabase
         .from("products")
         .update(updates)
+        .eq("tenant_id", tenant.id)
         .eq("id", id);
 
       if (error) throw error;
@@ -118,10 +151,12 @@ export function useUpdateProduct(id: string | undefined) {
 
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
+  const { tenant } = useTenant();
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (!tenant) throw new Error("Select a business before deleting a product.");
+      const { error } = await supabase.from("products").delete().eq("tenant_id", tenant.id).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

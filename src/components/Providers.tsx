@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import { TenantProvider } from "@/components/TenantProvider";
 
 interface Props {
   children: ReactNode;
@@ -13,7 +14,7 @@ export function Providers({ children }: Props) {
 
   return (
     <QueryClientProvider client={qc}>
-      {children}
+      <TenantProvider>{children}</TenantProvider>
     </QueryClientProvider>
   );
 }

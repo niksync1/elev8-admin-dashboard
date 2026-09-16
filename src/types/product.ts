@@ -1,5 +1,6 @@
 export interface Product {
   id: string;
+  tenant_id: string;
   name: string;
   slug: string;
   barcode: string;
@@ -7,6 +8,7 @@ export interface Product {
   price: number;
   compare_at_price?: number;
   stock_quantity: number;
+  location_quantity?: number;
   category?: string;
   images: string[];
   metadata: Record<string, any>;

@@ -76,12 +76,12 @@ export default function ProductsPage() {
                       <td className="px-6 py-4 text-right">
                         <span
                           className={
-                            product.stock_quantity <= 5
+                            (product.location_quantity ?? 0) <= 5
                               ? "font-medium text-red-600"
                               : "text-gray-900"
                           }
                         >
-                          {product.stock_quantity}
+                          {product.location_quantity ?? 0}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">

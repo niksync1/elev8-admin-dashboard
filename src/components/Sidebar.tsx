@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { getBrowserClient } from "@/lib/supabase";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
+import { useTenant } from "@/components/TenantProvider";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -16,6 +18,10 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { membership } = useTenant();
+  const visibleNavItems = navItems.filter(
+    (item) => item.href !== "/dashboard/users" || membership?.role === "owner"
+  );
 
   async function handleLogout() {
     const supabase = getBrowserClient();
@@ -28,9 +34,10 @@ export function Sidebar() {
       <div className="flex h-16 items-center border-b border-gray-200 px-6">
         <h1 className="text-lg font-bold text-gray-900">Inventory Admin</h1>
       </div>
+      <TenantSwitcher />
 
       <nav className="flex-1 space-y-1 p-4">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = pathname === item.href || 
             (item.href !== "/dashboard" && pathname.startsWith(item.href));
           

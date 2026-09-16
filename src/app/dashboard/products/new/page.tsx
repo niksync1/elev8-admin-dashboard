@@ -21,7 +21,6 @@ export default function NewProductPage() {
     price: "",
     compare_at_price: "",
     category: "",
-    stock_quantity: "",
     is_active: true,
   });
   const [error, setError] = useState("");
@@ -148,16 +147,8 @@ export default function NewProductPage() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="stock_quantity">Initial Stock</Label>
-                <Input
-                  id="stock_quantity"
-                  type="number"
-                  min="0"
-                  value={form.stock_quantity}
-                  onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })}
-                  placeholder="0"
-                />
+              <div className="flex items-end text-sm text-gray-500">
+                New products start at zero stock. Receive stock through an inventory transaction.
               </div>
             </div>
 

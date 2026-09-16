@@ -10,16 +10,16 @@ export default function ReportsPage() {
   const { data: transactions, isError: txError } = useRecentTransactions(50);
 
   const totalStockValue = (products ?? []).reduce(
-    (sum, p) => sum + p.price * p.stock_quantity,
+    (sum, p) => sum + p.price * (p.location_quantity ?? 0),
     0
   );
 
   const lowStockProducts = (products ?? []).filter(
-    (p) => p.stock_quantity <= 5 && p.stock_quantity > 0
+    (p) => (p.location_quantity ?? 0) <= 5 && (p.location_quantity ?? 0) > 0
   );
 
   const outOfStockProducts = (products ?? []).filter(
-    (p) => p.stock_quantity === 0
+    (p) => (p.location_quantity ?? 0) === 0
   );
 
   return (
@@ -86,10 +86,10 @@ export default function ReportsPage() {
                     <tr key={p.id} className="border-b border-gray-100">
                       <td className="px-6 py-4 text-gray-900">{p.name}</td>
                       <td className="px-6 py-4 text-right font-medium text-red-600">
-                        {p.stock_quantity}
+                        {p.location_quantity ?? 0}
                       </td>
                       <td className="px-6 py-4 text-right text-gray-600">
-                        GHS {(p.price * p.stock_quantity).toFixed(2)}
+                        GHS {(p.price * (p.location_quantity ?? 0)).toFixed(2)}
                       </td>
                     </tr>
                   ))}

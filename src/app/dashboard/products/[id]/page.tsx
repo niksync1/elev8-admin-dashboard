@@ -171,7 +171,7 @@ export default function EditProductPage() {
               <div className="space-y-2">
                 <Label>Stock Quantity</Label>
                 <div className="flex h-10 items-center rounded-lg border border-gray-200 bg-gray-50 px-3 text-sm text-gray-600">
-                  {product.stock_quantity}
+                  {product.location_quantity ?? 0}
                 </div>
               </div>
             </div>
