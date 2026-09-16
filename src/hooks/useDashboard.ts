@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getBrowserClient } from "@/lib/supabase";
-import type { DashboardSummary, InventoryTransaction } from "@/types/transaction";
+import type { DashboardSummary, InventoryTransaction, ResolvedInventoryTransaction } from "@/types/transaction";
 import { useTenant } from "@/components/TenantProvider";
 
 const supabase = getBrowserClient();
@@ -62,28 +62,54 @@ export function useRecentTransactions(limit = 10) {
 
       const transactions = (data ?? []) as InventoryTransaction[];
       const productIds = [...new Set(transactions.map((tx) => tx.product_id))];
+      const actorIds = [
+        ...new Set(
+          transactions
+            .map((tx) => tx.created_by)
+            .filter((id): id is string => Boolean(id))
+        ),
+      ];
       if (!productIds.length) return [];
 
-      const productsResult = await supabaseAny
-        .from("products")
-        .select("id,name")
-        .eq("tenant_id", tenant.id)
-        .in("id", productIds);
+      const [productsResult, profilesResult] = await Promise.all([
+        supabaseAny
+          .from("products")
+          .select("id,name")
+          .eq("tenant_id", tenant.id)
+          .in("id", productIds),
+        actorIds.length
+          ? supabaseAny.from("profiles").select("id,name,email").in("id", actorIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
 
       if (productsResult.error) {
         console.error("[useRecentTransactions] product lookup failed:", productsResult.error);
         throw productsResult.error;
       }
+      if (profilesResult.error) {
+        console.error("[useRecentTransactions] profile lookup failed:", profilesResult.error);
+        throw profilesResult.error;
+      }
 
       const productNames = new Map(
         (productsResult.data ?? []).map((product: { id: string; name: string }) => [product.id, product.name])
       );
+      const actorNames = new Map<string, string>(
+        (profilesResult.data ?? []).map(
+          (profile: { id: string; name: string | null; email: string }) => [
+            profile.id,
+            profile.name?.trim() || profile.email,
+          ]
+        )
+      );
 
-      return transactions.map((transaction) => ({
+      return transactions.map((transaction): ResolvedInventoryTransaction => ({
         ...transaction,
         products: productNames.has(transaction.product_id)
           ? { name: productNames.get(transaction.product_id) as string }
           : null,
+        performed_by:
+          (transaction.created_by && actorNames.get(transaction.created_by)) || "Unknown user",
       }));
     },
     retry: 1,

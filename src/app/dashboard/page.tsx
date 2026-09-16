@@ -66,6 +66,7 @@ export default function DashboardPage() {
                   <tr className="border-b border-gray-200">
                     <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
                     <th className="px-4 py-3 text-left font-medium text-gray-500">Type</th>
+                    <th className="px-4 py-3 text-left font-medium text-gray-500">Performed by</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Qty</th>
                     <th className="px-4 py-3 text-right font-medium text-gray-500">Date</th>
                   </tr>
@@ -88,6 +89,7 @@ export default function DashboardPage() {
                           {tx.transaction_type}
                         </Badge>
                       </td>
+                      <td className="px-4 py-3 text-gray-600">{tx.performed_by}</td>
                       <td className="px-4 py-3 text-right font-medium">
                         <span className={tx.quantity > 0 ? "text-green-600" : "text-red-600"}>
                           {tx.quantity > 0 ? `+${tx.quantity}` : tx.quantity}
