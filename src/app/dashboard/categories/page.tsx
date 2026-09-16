@@ -147,6 +147,9 @@ export default function CategoriesPage() {
                       <div className="flex-[2]">
                         <p className="text-sm text-gray-500">{cat.description ?? "—"}</p>
                       </div>
+                      <Badge variant="gray">
+                        {cat.product_count ?? 0} {(cat.product_count ?? 0) === 1 ? "product" : "products"}
+                      </Badge>
                       <Badge variant={cat.is_active ? "success" : "gray"}>
                         {cat.is_active ? "Active" : "Inactive"}
                       </Badge>

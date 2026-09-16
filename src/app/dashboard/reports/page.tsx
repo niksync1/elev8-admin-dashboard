@@ -6,7 +6,7 @@ import { useProducts } from "@/hooks/useProducts";
 
 export default function ReportsPage() {
   const { data: summary } = useDashboardSummary();
-  const { data: products } = useProducts();
+  const { data: products, isError: productsError } = useProducts();
   const { data: transactions, isError: txError } = useRecentTransactions(50);
 
   const totalStockValue = (products ?? []).reduce(
@@ -30,6 +30,11 @@ export default function ReportsPage() {
       </div>
 
       {/* Summary Cards */}
+      {productsError && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Failed to load products for this location. Please refresh and try again.
+        </div>
+      )}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-6">

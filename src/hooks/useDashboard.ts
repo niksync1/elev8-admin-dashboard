@@ -37,8 +37,9 @@ export function useDashboardSummary() {
   });
 }
 
-// Fetches recent transactions, joining product names when possible.
-// Falls back to a simpler query if the join relationship is unavailable.
+// Resolve product names explicitly. inventory_transactions has both the legacy
+// product_id FK and the tenant/product composite FK, which makes an embedded
+// `products(name)` relation ambiguous to PostgREST.
 export function useRecentTransactions(limit = 10) {
   const { tenant, location } = useTenant();
   return useQuery({
@@ -46,22 +47,6 @@ export function useRecentTransactions(limit = 10) {
     queryFn: async () => {
       if (!tenant || !location) return [];
       const supabaseAny: any = supabase;
-
-      try {
-        const { data, error } = await supabaseAny
-          .from("inventory_transactions")
-          .select("*, products(name)")
-          .eq("tenant_id", tenant.id)
-          .eq("location_id", location.id)
-          .order("created_at", { ascending: false })
-          .limit(limit);
-
-        if (error) throw error;
-        return (data ?? []) as (InventoryTransaction & { products: { name: string } | null })[];
-      } catch (joinError) {
-        // Join failed (e.g. FK/RLS constraint) — fall back to base query
-      }
-
       const { data, error } = await supabaseAny
         .from("inventory_transactions")
         .select("*")
@@ -74,7 +59,32 @@ export function useRecentTransactions(limit = 10) {
         console.error("[useRecentTransactions] base query failed:", error);
         throw error;
       }
-      return (data ?? []) as (InventoryTransaction & { products: { name: string } | null })[];
+
+      const transactions = (data ?? []) as InventoryTransaction[];
+      const productIds = [...new Set(transactions.map((tx) => tx.product_id))];
+      if (!productIds.length) return [];
+
+      const productsResult = await supabaseAny
+        .from("products")
+        .select("id,name")
+        .eq("tenant_id", tenant.id)
+        .in("id", productIds);
+
+      if (productsResult.error) {
+        console.error("[useRecentTransactions] product lookup failed:", productsResult.error);
+        throw productsResult.error;
+      }
+
+      const productNames = new Map(
+        (productsResult.data ?? []).map((product: { id: string; name: string }) => [product.id, product.name])
+      );
+
+      return transactions.map((transaction) => ({
+        ...transaction,
+        products: productNames.has(transaction.product_id)
+          ? { name: productNames.get(transaction.product_id) as string }
+          : null,
+      }));
     },
     retry: 1,
     enabled: !!tenant && !!location,

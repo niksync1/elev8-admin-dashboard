@@ -20,7 +20,28 @@ export function useCategories() {
         .order("name", { ascending: true });
 
       if (error) throw error;
-      return (data ?? []) as Category[];
+      const categories = (data ?? []) as Category[];
+      if (!categories.length) return categories;
+
+      // Products currently store the category name in products.category rather
+      // than a category_id, so resolve counts within the active tenant.
+      const productsResult = await supabase
+        .from("products")
+        .select("category")
+        .eq("tenant_id", tenant.id);
+
+      if (productsResult.error) throw productsResult.error;
+      const counts = new Map<string, number>();
+      for (const product of productsResult.data ?? []) {
+        if (product.category) {
+          counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+        }
+      }
+
+      return categories.map((category) => ({
+        ...category,
+        product_count: counts.get(category.name) ?? 0,
+      }));
     },
     enabled: !!tenant,
   });
