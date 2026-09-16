@@ -1,68 +1,38 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getAdminClient } from "@/lib/supabase";
-import { getServerClient } from "@/lib/supabase-server";
+import { errorMessage, requireTenantOwner } from "@/lib/tenant-admin-server";
+
+const schema = z.object({ tenantId: z.string().uuid(), userId: z.string().uuid() });
 
 export async function POST(request: Request) {
   try {
-    // --- Authorization: only admins can reset passwords ---
-    const supabase = await getServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const parsed = schema.safeParse(await request.json());
+    if (!parsed.success) return NextResponse.json({ error: "Invalid password-reset request." }, { status: 400 });
+    const { tenantId, userId } = parsed.data;
+    const authorization = await requireTenantOwner(tenantId);
+    if ("error" in authorization) return authorization.error;
 
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+    const admin = getAdminClient();
+    const membership = await admin.from("tenant_memberships").select("user_id")
+      .eq("tenant_id", tenantId).eq("user_id", userId).maybeSingle();
+    if (membership.error) throw membership.error;
+    if (!membership.data) return NextResponse.json({ error: "Tenant membership not found." }, { status: 404 });
+    const profile = await admin.from("profiles").select("email").eq("id", userId).maybeSingle();
+    if (profile.error) throw profile.error;
+    if (!profile.data?.email) return NextResponse.json({ error: "The member has no email address." }, { status: 400 });
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile || profile.role !== "admin") {
-      return NextResponse.json(
-        { error: "Forbidden. Admin access required." },
-        { status: 403 }
-      );
-    }
-
-    // --- Validate request body ---
-    const { email } = await request.json();
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "Email is required." },
-        { status: 400 }
-      );
-    }
-
-    const adminClient = getAdminClient();
-
-    // Generate a password recovery link AND send the email automatically.
-    // should_send_email: true dispatches the recovery email to the user.
-    // The returned action_link is also provided so the admin can share it
-    // as a fallback if the user doesn't receive the email.
     const origin = new URL(request.url).origin;
-    const { data, error } = await adminClient.auth.admin.generateLink({
-      type: "recovery",
-      email,
-      should_send_email: true,
-      redirectTo: `${origin}/update-password`,
-    } as any); // should_send_email is not in the SDK types, but GoTrue supports it
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      message: "Password reset email sent successfully.",
-      link: data.properties.action_link,
+    const result = await admin.auth.admin.generateLink({
+      type: "recovery", email: profile.data.email,
+      options: { redirectTo: `${origin}/update-password` },
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message || "Internal server error." },
-      { status: 500 }
-    );
+    if (result.error) return NextResponse.json({ error: result.error.message }, { status: 400 });
+    return NextResponse.json({
+      message: "Password recovery link generated.",
+      link: result.data.properties.action_link,
+    });
+  } catch (error: unknown) {
+    return NextResponse.json({ error: errorMessage(error) }, { status: 500 });
   }
 }
