@@ -7,6 +7,10 @@ import { useTenant } from "@/components/TenantProvider";
 
 const supabase: any = getBrowserClient();
 
+export function normalizeCategoryName(value: string) {
+  return value.trim().toLocaleLowerCase();
+}
+
 export function useCategories() {
   const { tenant } = useTenant();
   return useQuery({
@@ -34,13 +38,14 @@ export function useCategories() {
       const counts = new Map<string, number>();
       for (const product of productsResult.data ?? []) {
         if (product.category) {
-          counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+          const normalizedCategory = normalizeCategoryName(product.category);
+          counts.set(normalizedCategory, (counts.get(normalizedCategory) ?? 0) + 1);
         }
       }
 
       return categories.map((category) => ({
         ...category,
-        product_count: counts.get(category.name) ?? 0,
+        product_count: counts.get(normalizeCategoryName(category.name)) ?? 0,
       }));
     },
     enabled: !!tenant,

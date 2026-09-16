@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProduct, useUpdateProduct } from "@/hooks/useProducts";
-import { useCategories } from "@/hooks/useCategories";
+import { normalizeCategoryName, useCategories } from "@/hooks/useCategories";
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -36,11 +36,16 @@ export default function EditProductPage() {
         description: product.description ?? "",
         price: product.price?.toString() ?? "",
         compare_at_price: product.compare_at_price?.toString() ?? "",
-        category: product.category ?? "",
+        category:
+          categories?.find(
+            (category) =>
+              product.category &&
+              normalizeCategoryName(category.name) === normalizeCategoryName(product.category)
+          )?.name ?? product.category ?? "",
         is_active: product.is_active ?? true,
       });
     }
-  }, [product]);
+  }, [product, categories]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
