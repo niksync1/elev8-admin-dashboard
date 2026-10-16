@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 type Tenant = { id: string; name: string };
 type Supplier = {
@@ -119,7 +119,7 @@ export default function SuppliersPage() {
     setForm(emptyForm);
   }
 
-  async function saveSupplier(event: React.FormEvent<HTMLFormElement>) {
+  async function saveSupplier(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!tenantId) {
       setError("Select an authorized tenant first.");
