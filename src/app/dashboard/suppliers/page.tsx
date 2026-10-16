@@ -165,6 +165,38 @@ export default function SuppliersPage() {
     }
   }
 
+  async function reactivateSupplier(supplier: Supplier) {
+    if (!tenantId) return;
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/suppliers", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tenantId,
+          id: supplier.id,
+          supplierType: supplier.supplier_type,
+          name: supplier.name,
+          contactPerson: supplier.contact_person ?? "",
+          phone: supplier.phone ?? "",
+          email: supplier.email ?? "",
+          address: supplier.address ?? "",
+          taxReference: supplier.tax_reference ?? "",
+          paymentTerms: supplier.payment_terms ?? "",
+          notes: supplier.notes ?? "",
+          isActive: true,
+        }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Unable to reactivate supplier.");
+      await loadSuppliers(tenantId);
+      setNotice("Supplier reactivated.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to reactivate supplier.");
+    }
+  }
+
   return (
     <div className="space-y-8">
       <header>
@@ -230,7 +262,7 @@ export default function SuppliersPage() {
                 <td className="px-4 py-3 text-gray-600">{supplier.supplier_type === "business" ? "Business" : "Individual"}{supplier.contact_person ? ` · ${supplier.contact_person}` : ""}</td>
                 <td className="px-4 py-3 text-gray-600">{supplier.payment_terms || "—"}</td>
                 <td className="px-4 py-3"><span className={supplier.is_active ? "rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700" : "rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600"}>{supplier.is_active ? "Active" : "Inactive"}</span></td>
-                <td className="px-4 py-3"><div className="flex flex-wrap gap-3"><button onClick={() => startEdit(supplier)} className="font-medium text-blue-700 hover:underline">Edit</button>{supplier.is_active ? <button onClick={() => void deactivateSupplier(supplier)} className="font-medium text-red-700 hover:underline">Deactivate</button> : null}</div></td>
+                <td className="px-4 py-3"><div className="flex flex-wrap gap-3"><button onClick={() => startEdit(supplier)} className="font-medium text-blue-700 hover:underline">Edit</button>{supplier.is_active ? <button onClick={() => void deactivateSupplier(supplier)} className="font-medium text-red-700 hover:underline">Deactivate</button> : <button onClick={() => void reactivateSupplier(supplier)} className="font-medium text-green-700 hover:underline">Reactivate</button>}</div></td>
               </tr>)}</tbody>
             </table>
           </div>
