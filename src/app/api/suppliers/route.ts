@@ -17,8 +17,7 @@ type SupplierInput = {
 };
 
 function optionalText(value: unknown, maxLength: number): string | null | undefined {
-  if (value === undefined) return undefined;
-  if (value === null || value === "") return null;
+  if (value === undefined || value === null || value === "") return null;
   if (typeof value !== "string" || value.length > maxLength) return undefined;
   return value.trim() || null;
 }
