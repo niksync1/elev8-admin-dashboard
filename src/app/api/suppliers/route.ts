@@ -30,16 +30,9 @@ async function authorizeDashboardAdmin() {
     return { response: NextResponse.json({ error: "Authentication required." }, { status: 401 }) } as const;
   }
 
-  const { data: profile, error: profileError } = await sessionClient
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profileError || profile?.role !== "admin") {
-    return { response: NextResponse.json({ error: "Admin dashboard access required." }, { status: 403 }) } as const;
-  }
-
+  // Tenant membership is the source of truth here. Legacy profiles.role is
+  // global and defaults new sign-ups to "customer", while a legitimate tenant
+  // owner is represented by tenant_memberships.role="owner".
   const adminClient = getAdminClient();
   const { data: memberships, error: membershipError } = await adminClient
     .from("tenant_memberships")
