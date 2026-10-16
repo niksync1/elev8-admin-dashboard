@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerClient } from "@/lib/supabase-server";
-import { getAdminClient } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase-admin";
 
 type SupplierInput = {
   tenantId?: unknown;
