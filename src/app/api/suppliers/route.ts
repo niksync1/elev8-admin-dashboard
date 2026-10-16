@@ -14,6 +14,7 @@ type SupplierInput = {
   taxReference?: unknown;
   paymentTerms?: unknown;
   notes?: unknown;
+  isActive?: unknown;
 };
 
 function optionalText(value: unknown, maxLength: number): string | null | undefined {
@@ -110,6 +111,7 @@ export async function GET(request: Request) {
     if ("response" in context) return context;
 
     if (!tenantId) {
+      if (!context.tenantIds.length) return NextResponse.json({ tenants: [] });
       const { data: tenants, error } = await context.adminClient
         .from("tenants")
         .select("id,name")
@@ -170,7 +172,7 @@ export async function PATCH(request: Request) {
 
     const { data, error } = await context.adminClient
       .from("suppliers")
-      .update(parsed.value)
+      .update({ ...parsed.value, ...(typeof input.isActive === "boolean" ? { is_active: input.isActive } : {}) })
       .eq("tenant_id", input.tenantId as string)
       .eq("id", input.id)
       .select("id,tenant_id,supplier_type,name,contact_person,phone,email,address,tax_reference,payment_terms,notes,is_active,created_at,updated_at")
