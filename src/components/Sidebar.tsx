@@ -8,6 +8,7 @@ import { getBrowserClient } from "@/lib/supabase";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
   { href: "/dashboard/products", label: "Products", icon: "📦" },
+  { href: "/dashboard/suppliers", label: "Suppliers", icon: "🏭" },
   { href: "/dashboard/categories", label: "Categories", icon: "🏷️" },
   { href: "/dashboard/users", label: "Users", icon: "👥" },
   { href: "/dashboard/reports", label: "Reports", icon: "📈" },
