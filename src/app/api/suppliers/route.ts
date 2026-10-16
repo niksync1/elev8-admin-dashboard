@@ -23,7 +23,7 @@ function optionalText(value: unknown, maxLength: number): string | null | undefi
   return value.trim() || null;
 }
 
-async function authorizeDashboardAdmin() {
+async function authorizeSupplierManager() {
   const sessionClient = await getServerClient();
   const { data: { user }, error: userError } = await sessionClient.auth.getUser();
   if (userError || !user) {
@@ -53,7 +53,7 @@ async function authorizeDashboardAdmin() {
 }
 
 async function authorizeTenant(tenantId: unknown) {
-  const context = await authorizeDashboardAdmin();
+  const context = await authorizeSupplierManager();
   if ("response" in context) return context;
   if (typeof tenantId !== "string" || !context.tenantIds.includes(tenantId)) {
     return { response: NextResponse.json({ error: "You are not authorized to manage suppliers for this tenant." }, { status: 403 }) } as const;
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const tenantId = url.searchParams.get("tenantId");
-    const context = await authorizeDashboardAdmin();
+    const context = await authorizeSupplierManager();
     if ("response" in context) return context;
 
     if (!tenantId) {
