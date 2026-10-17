@@ -65,9 +65,9 @@ export async function POST(request: Request) {
       message: "User invited successfully! They will receive an email to set their password.",
       user: data.user,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || "Internal server error." },
+      { error: err instanceof Error ? err.message : "Internal server error." },
       { status: 500 }
     );
   }

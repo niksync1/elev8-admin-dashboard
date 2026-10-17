@@ -51,8 +51,8 @@ export default function NewProductPage() {
         category: form.category || undefined,
       });
       router.push("/dashboard/products");
-    } catch (err: any) {
-      setError(err.message || "Failed to create product.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create product.");
     }
   }
 

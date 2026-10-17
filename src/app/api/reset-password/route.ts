@@ -49,7 +49,9 @@ export async function POST(request: Request) {
       email,
       should_send_email: true,
       redirectTo: `${origin}/update-password`,
-    } as any); // should_send_email is not in the SDK types, but GoTrue supports it
+    } as Parameters<typeof adminClient.auth.admin.generateLink>[0] & {
+      should_send_email?: boolean;
+    }); // should_send_email is not in the SDK types, but GoTrue supports it
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
@@ -59,9 +61,9 @@ export async function POST(request: Request) {
       message: "Password reset email sent successfully.",
       link: data.properties.action_link,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || "Internal server error." },
+      { error: err instanceof Error ? err.message : "Internal server error." },
       { status: 500 }
     );
   }

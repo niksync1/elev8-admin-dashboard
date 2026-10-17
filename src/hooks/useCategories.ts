@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrowserClient } from "@/lib/supabase";
 import type { Category, CreateCategoryInput, UpdateCategoryInput } from "@/types/category";
 
-const supabase: any = getBrowserClient();
+const supabase = getBrowserClient();
 
 export function useCategories() {
   return useQuery({
@@ -53,7 +53,7 @@ export function useUpdateCategory() {
 
   return useMutation({
     mutationFn: async ({ id, ...input }: { id: string } & UpdateCategoryInput) => {
-      const updates: Record<string, any> = {};
+      const updates: Record<string, unknown> = {};
 
       if (input.name !== undefined) {
         updates.name = input.name;

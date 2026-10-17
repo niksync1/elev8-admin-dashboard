@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrowserClient } from "@/lib/supabase";
 import type { Product, CreateProductInput, UpdateProductInput } from "@/types/product";
 
-const supabase: any = getBrowserClient();
+const supabase = getBrowserClient();
 
 export function useProducts(search?: string) {
   return useQuery({
@@ -85,7 +85,7 @@ export function useUpdateProduct(id: string | undefined) {
     mutationFn: async (input: UpdateProductInput) => {
       if (!id) throw new Error("Product ID is required");
 
-      const updates: Record<string, any> = {};
+      const updates: Record<string, unknown> = {};
 
       if (input.name !== undefined) {
         updates.name = input.name;

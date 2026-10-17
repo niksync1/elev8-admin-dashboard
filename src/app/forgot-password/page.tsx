@@ -35,8 +35,8 @@ export default function ForgotPasswordPage() {
       if (error) throw error;
 
       setSent(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset link. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send reset link. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Reset Password</CardTitle>
           <CardDescription>
-            Enter your email address and we'll send you a reset link.
+            Enter your email address and we&apos;ll send you a reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>

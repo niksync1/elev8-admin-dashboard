@@ -55,8 +55,8 @@ export default function UsersPage() {
         type: "success",
         text: `Invite sent to ${inviteEmail.trim()}. They will receive an email to set their password.`,
       });
-    } catch (err: any) {
-      setInviteError(err.message);
+    } catch (err: unknown) {
+      setInviteError(err instanceof Error ? err.message : "Failed to invite user.");
     } finally {
       setInviteLoading(false);
     }
@@ -80,7 +80,7 @@ export default function UsersPage() {
           }
           setResetEmail(null);
         },
-        onError: (err: any) => {
+        onError: (err) => {
           setActionMessage({
             type: "error",
             text: err.message || "Failed to send password reset email.",
@@ -176,7 +176,7 @@ export default function UsersPage() {
           <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl">
             <h3 className="text-lg font-bold text-gray-900">Password Reset Link</h3>
             <p className="mt-1 text-sm text-gray-500">
-              A reset email was sent to the user. Use this link as a fallback if they don't receive it.
+              A reset email was sent to the user. Use this link as a fallback if they don&apos;t receive it.
             </p>
             <div className="mt-4 flex items-center gap-2">
               <Input value={resetLink} readOnly className="text-xs" />

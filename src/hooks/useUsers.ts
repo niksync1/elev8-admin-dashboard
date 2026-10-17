@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getBrowserClient } from "@/lib/supabase";
 import type { UserProfile } from "@/types/user";
 
-const supabase: any = getBrowserClient();
+const supabase = getBrowserClient();
 
 export function useUsers() {
   return useQuery({

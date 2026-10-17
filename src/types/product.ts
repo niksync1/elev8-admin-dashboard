@@ -9,7 +9,7 @@ export interface Product {
   stock_quantity: number;
   category?: string;
   images: string[];
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -23,8 +23,8 @@ export interface CreateProductInput {
   compare_at_price?: number;
   category?: string;
   images?: string[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   is_active?: boolean;
 }
 
-export interface UpdateProductInput extends Partial<CreateProductInput> {}
+export type UpdateProductInput = Partial<CreateProductInput>;
