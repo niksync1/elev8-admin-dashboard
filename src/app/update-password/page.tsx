@@ -90,8 +90,8 @@ export default function UpdatePasswordPage() {
 
       setMessage("Password updated successfully. Redirecting to dashboard...");
       setTimeout(() => router.push("/dashboard"), 1200);
-    } catch (err: any) {
-      setError(err.message || "Failed to update password.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update password.");
     } finally {
       setLoading(false);
     }

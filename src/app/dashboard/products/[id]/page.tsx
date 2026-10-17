@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,39 +8,54 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useProduct, useUpdateProduct } from "@/hooks/useProducts";
 import { useCategories } from "@/hooks/useCategories";
+import type { Product } from "@/types/product";
+import type { Category } from "@/types/category";
 
 export default function EditProductPage() {
-  const router = useRouter();
   const params = useParams();
   const id = params.id as string;
   const { data: product, isLoading } = useProduct(id);
-  const updateProduct = useUpdateProduct(id);
   const { data: categories } = useCategories();
 
+  if (isLoading) {
+    return <div className="text-sm text-gray-500">Loading product...</div>;
+  }
+
+  if (!product) {
+    return <div className="text-sm text-red-500">Product not found.</div>;
+  }
+
+  // Keying the form by product id resets its state automatically when the
+  // loaded product changes, avoiding a setState-in-effect sync.
+  return (
+    <ProductEditForm
+      key={product.id}
+      product={product}
+      categories={categories ?? []}
+    />
+  );
+}
+
+function ProductEditForm({
+  product,
+  categories,
+}: {
+  product: Product;
+  categories: Category[];
+}) {
+  const router = useRouter();
+  const updateProduct = useUpdateProduct(product.id);
+
   const [form, setForm] = useState({
-    name: "",
-    barcode: "",
-    description: "",
-    price: "",
-    compare_at_price: "",
-    category: "",
-    is_active: true,
+    name: product.name ?? "",
+    barcode: product.barcode ?? "",
+    description: product.description ?? "",
+    price: product.price?.toString() ?? "",
+    compare_at_price: product.compare_at_price?.toString() ?? "",
+    category: product.category ?? "",
+    is_active: product.is_active ?? true,
   });
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (product) {
-      setForm({
-        name: product.name ?? "",
-        barcode: product.barcode ?? "",
-        description: product.description ?? "",
-        price: product.price?.toString() ?? "",
-        compare_at_price: product.compare_at_price?.toString() ?? "",
-        category: product.category ?? "",
-        is_active: product.is_active ?? true,
-      });
-    }
-  }, [product]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,17 +83,9 @@ export default function EditProductPage() {
         is_active: form.is_active,
       });
       router.push("/dashboard/products");
-    } catch (err: any) {
-      setError(err.message || "Failed to update product.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to update product.");
     }
-  }
-
-  if (isLoading) {
-    return <div className="text-sm text-gray-500">Loading product...</div>;
-  }
-
-  if (!product) {
-    return <div className="text-sm text-red-500">Product not found.</div>;
   }
 
   return (

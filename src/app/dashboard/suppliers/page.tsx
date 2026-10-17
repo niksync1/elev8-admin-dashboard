@@ -89,11 +89,18 @@ export default function SuppliersPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError("");
-    void loadSuppliers(tenantId)
-      .catch(caught => { if (active) setError(caught instanceof Error ? caught.message : "Unable to load suppliers."); })
-      .finally(() => { if (active) setLoading(false); });
+    async function loadForTenant() {
+      setLoading(true);
+      setError("");
+      try {
+        await loadSuppliers(tenantId);
+      } catch (caught) {
+        if (active) setError(caught instanceof Error ? caught.message : "Unable to load suppliers.");
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+    void loadForTenant();
     return () => { active = false; };
   }, [tenantId, loadSuppliers]);
 
