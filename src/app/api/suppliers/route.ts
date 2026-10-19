@@ -101,7 +101,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const tenantId = url.searchParams.get("tenantId");
     const context = await authorizeSupplierManager();
-    if ("response" in context) return context;
+    if ("response" in context) return context.response;
 
     if (!tenantId) {
       if (!context.tenantIds.length) return NextResponse.json({ tenants: [] });
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
   try {
     const input = await request.json() as SupplierInput;
     const context = await authorizeTenant(input.tenantId);
-    if ("response" in context) return context;
+    if ("response" in context) return context.response;
 
     const parsed = parseSupplier(input);
     if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -158,7 +158,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Supplier ID is required." }, { status: 400 });
     }
     const context = await authorizeTenant(input.tenantId);
-    if ("response" in context) return context;
+    if ("response" in context) return context.response;
 
     const parsed = parseSupplier(input);
     if ("error" in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 });
@@ -185,7 +185,7 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Supplier ID is required." }, { status: 400 });
     }
     const context = await authorizeTenant(input.tenantId);
-    if ("response" in context) return context;
+    if ("response" in context) return context.response;
 
     const { data, error } = await context.adminClient
       .from("suppliers")
